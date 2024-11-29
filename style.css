@@ -25,7 +25,11 @@ body {
 }
 
 header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     justify-content: center;
+    position: relative;
     font-size: 1.5rem;
     line-height: 2rem;
     text-align: center;
@@ -35,8 +39,103 @@ header {
     padding-bottom: 1rem;
 }
 
+input[type = "file"] {
+    display:none
+}
+
+h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+p {
+    padding: 10px
+}
+
+.file-upload {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--palette-teal);
+    border-width: 0;
+    color: var(--palette-grey)
+}
+
+.file-upload:hover {
+    background-color: var(--palette-white);
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+
 #map {
     display: flex;
     flex-direction: column;
     flex: 1;
+}
+
+#header-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    position: absolute;
+    right: 3rem;
+}
+
+#open-help {
+    font-size: 48px;
+    color: var(--palette-teal);
+    cursor: pointer;
+}
+
+#open-help:hover {
+    color: var(--palette-white);
+}
+
+#close-help {
+    font-size: 48px;
+    cursor:pointer;
+}
+
+#close-help:hover {
+    color: var(--palette-teal)
+}
+
+#help-overlay { /*transparent background*/
+    display:none;
+    position:fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999; /*overlay should be displayed above everthing else*/
+    justify-content: center;
+    align-items: center;
+}
+
+#help-content {
+    position: absolute;
+    background-color: var(--palette-grey);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: var(--palette-white);
+}
+
+#help-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
 }

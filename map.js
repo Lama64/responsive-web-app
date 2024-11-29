@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(() => {
     let map = L.map('map').setView([49.007, 8.404], 14);
     let layerControl;
 
@@ -36,4 +36,4 @@ $(document).ready(function() {
         layerControl = L.control.layers(null, layerGroups).addTo(map);
     }
     window.displayStations = displayStations;
-})
+});

@@ -1,6 +1,6 @@
-$(document).ready(function() {
+$(document).ready(() => {
     //Get content of input file
-    $('#stopInput').change((event) => {
+    $('#stop-upload').on("change" ,(event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
         let text;
