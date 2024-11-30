@@ -1,6 +1,50 @@
 $(document).ready(() => {
-    //Get content of input file
-    $('#stop-upload').on("change" ,(event) => {
+
+    $('.city-search-form').on("submit", async function (event) {
+        event.preventDefault();
+        let inputField =  $(this).find('input');
+        displayStations(await stationsAPICall(inputField.val()));
+        inputField.blur();
+        inputField.val('');
+    })
+
+    // call overpass API to get tram stations of city and convert to map object
+    async function stationsAPICall(geocodeArea) {
+        let result = await fetch(
+            "https://overpass-api.de/api/interpreter",
+            {
+                method: "POST",
+                body: "data="+ encodeURIComponent(`
+                        [out:json][timeout:25];
+                        // Define the area by the city name
+                        area[name="${geocodeArea}"]->.searchArea;
+
+                        // Fetch all tram stations in the area
+                        (
+                        node["railway"="tram_stop"](area.searchArea);
+                        way["railway"="tram_stop"](area.searchArea);
+                        relation["railway"="tram_stop"](area.searchArea);
+                        );
+
+                        // Output the results
+                        out body;
+                        >;
+                        out skel qt;
+                    `)
+            },
+        ).then((data) => data.json());
+        let stations = new Map();
+        for (let station of result.elements) {
+            if (!(station.tags) || !(station.lat) || !(station.lon)) {
+                continue; // skip node if required data not available
+            }
+            stations.set(station.id, {name: station.tags.name, lat: station.lat, lon: station.lon, zone: geocodeArea});
+        }
+        return stations;
+    }
+
+    // Get content of input file
+    $('#stop-upload').on("change", (event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
         let text;
@@ -9,7 +53,7 @@ $(document).ready(() => {
         reader.onload = (e) => {
             text = e.target.result;
             try {
-                displayStations(parseStops(text));
+                displayStations(parseStopsFile(text));
             } catch (error) {
                 alert(error);
             }
@@ -17,7 +61,8 @@ $(document).ready(() => {
         reader.onerror = () => alert('Error loading file');
     })
 
-    function parseStops(text) {
+    // convert lines to map object
+    function parseStopsFile(text) {
         let lines = text.trim().split(/\r?\n/);
         const indices = lines[0].split(',').map(value => value.replace(/^"|"$/g, ''));
         let idIndex = findIndex('stop_id', indices, true);
@@ -44,7 +89,7 @@ $(document).ready(() => {
             }
 
             stations.set(values[idIndex],
-                {name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: values[zoneIndex]});
+                {name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + values[zoneIndex]});
             previousParentStation = values[parentIndex];
         }
         return stations;

@@ -39,6 +39,12 @@ header {
     padding-bottom: 1rem;
 }
 
+input {
+    background-color: var(--palette-grey);
+    color: var(--palette-white);
+    padding: 10px;
+}
+
 input[type = "file"] {
     display:none
 }

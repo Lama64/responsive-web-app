@@ -1,6 +1,6 @@
 $(document).ready(() => {
     let map = L.map('map').setView([49.007, 8.404], 14);
-    let layerControl;
+    let layerControl = undefined;
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -24,16 +24,22 @@ $(document).ready(() => {
 
     function displayStations(stations) {
         let layerGroups = {};
-        stations.forEach((values, _key, _map) => {
-            if (`Zone ${values['zone']}` in layerGroups) {
-                layerGroups[`Zone ${values['zone']}`]
-                    .addLayer(L.marker([values['lat'], values['lon']]).bindPopup(values['name']));
+        stations.forEach((values) => {
+            if (`${values['zone']}` in layerGroups) {
+                layerGroups[`${values['zone']}`]
+                    .addLayer(L.marker([values['lat'], values['lon']]).bindPopup(values['name'])).addTo(map);
             } else {
-                layerGroups[`Zone ${values['zone']}`] 
-                    = L.layerGroup([L.marker([values['lat'], values['lon']]).bindPopup(values['name'])]);
+                layerGroups[`${values['zone']}`] 
+                    = L.layerGroup([L.marker([values['lat'], values['lon']]).bindPopup(values['name'])]).addTo(map);
             }
         });
-        layerControl = L.control.layers(null, layerGroups).addTo(map);
+        if (layerControl === undefined) {
+            layerControl = L.control.layers(null, layerGroups).addTo(map);
+        } else {
+            for (let group in layerGroups) {
+                layerControl.addOverlay(layerGroups[group], group).addTo(map);
+            };
+        }
     }
     window.displayStations = displayStations;
 });
