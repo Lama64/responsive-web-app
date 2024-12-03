@@ -1,21 +1,37 @@
 $(document).ready(() => {
 
+    /**
+     * Reaction to the submit event of the city search field.
+     * Gives the input value to the stationsAPICall function.
+     */
     $('.city-search-form').on("submit", async function (event) {
         event.preventDefault();
         let inputField =  $(this).find('input');
-        displayStations(await stationsAPICall(inputField.val()));
-        inputField.blur();
-        inputField.val('');
+        try {
+            displayStations(await stationsAPICall(inputField.val())); // add try catch
+            inputField.blur();
+            inputField.val('');
+        } catch (error) {
+            // failure toast
+        }
     })
 
-    // call overpass API to get tram stations of city and convert to map object
+    /**
+     * Calls the Overpass API to get all tram stations inside the given area.
+     * See https://wiki.openstreetmap.org/wiki/Overpass_API for API information.
+     * 
+     * @param {string} geocodeArea The area to search.
+     * @returns {Promise<Map<string, {name: string, lat: Number, lon: Number, zone: string}>>}
+     *          A promise of a map containing the relavant information about the stations needed for the markers.
+     * @throws Will throw an error if no suitable stations could be found.
+     */
     async function stationsAPICall(geocodeArea) {
         let result = await fetch(
             "https://overpass-api.de/api/interpreter",
             {
                 method: "POST",
                 body: "data="+ encodeURIComponent(`
-                        [out:json][timeout:25];
+                        [out:json][timeout:100];
                         // Define the area by the city name
                         area[name="${geocodeArea}"]->.searchArea;
 
@@ -34,16 +50,25 @@ $(document).ready(() => {
             },
         ).then((data) => data.json());
         let stations = new Map();
+        let count = 0;
         for (let station of result.elements) {
-            if (!(station.tags) || !(station.lat) || !(station.lon)) {
-                continue; // skip node if required data not available
+            if (station.tags && station.lat && station.lon) { // only add nodes which contain the required information
+                stations.set(station.id, {name: station.tags.name, lat: station.lat, lon: station.lon, zone: geocodeArea});
+                count++;
             }
-            stations.set(station.id, {name: station.tags.name, lat: station.lat, lon: station.lon, zone: geocodeArea});
+        }
+        if (count === 0) {
+            throw new Error("No stations found.")
+        } else {
+            // TODO: success toast
         }
         return stations;
     }
 
-    // Get content of input file
+    /**
+     * Reaction to file upload.
+     * Gives the file to the parser function.
+     */
     $('#stop-upload').on("change", (event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
@@ -55,13 +80,19 @@ $(document).ready(() => {
             try {
                 displayStations(parseStopsFile(text));
             } catch (error) {
-                alert(error);
+                alert(error); // TODO: replace with toast
             }
         }
-        reader.onerror = () => alert('Error loading file');
+        reader.onerror = () => alert('Error loading file'); // TODO: change to toast
     })
 
-    // convert lines to map object
+    /**
+     * Parses the input text to a map.
+     * @param {string} text the text of the input file.
+     * @returns {Map<string, {name: string, lat: Number, lon: Number, zone: string}>}
+     *          A map containing the relavant information about the stations needed for the markers.
+     * @throws Will throw an error if no suitable stations where found in the file.
+     */
     function parseStopsFile(text) {
         let lines = text.trim().split(/\r?\n/);
         const indices = lines[0].split(',').map(value => value.replace(/^"|"$/g, ''));
@@ -76,6 +107,7 @@ $(document).ready(() => {
         lines = lines.slice(1); // first line contains format, no longer needed
         let previousParentStation = '';
         let stations = new Map();
+        let count = 0;
         for (let line of lines) {
             // " removed after split
             const values = line.split(',').map(value => value.replace(/^"|"$/g, ''));
@@ -84,21 +116,36 @@ $(document).ready(() => {
                 continue; // station only needed once (each track listed seperately)
             }
 
-            if (values[typeIndex]) { 
+            if (values[typeIndex] == 1) { 
                 break; // parent stations listed seperately at end of file with location_type 1, not needed again
             }
 
             stations.set(values[idIndex],
                 {name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + values[zoneIndex]});
             previousParentStation = values[parentIndex];
+            count++;
+        }
+        if (count === 0) {
+            throw new Error("No stations found in file.")
+        } else {
+            // TODO: success toast
         }
         return stations;
     }
 
+    /**
+     * Finds the array index of the given index name.
+     * 
+     * @param {string} indexName The index name to find e.g. stop_name.
+     * @param {string[]} array The array to search.
+     * @param {boolean} errorOnUndefined If true an error will be thrown if the array doesn't contain the index name.
+     * @returns {Number | undefined} The array index of the index name or undefined if errorOnUndefined is false and the index name was not found.
+     * @throws Will throw an error if errorOnUndefined is true and the index name was not found.
+     */
     function findIndex(indexName, array, errorOnUndefined) {
         let index = array.findIndex((element) => element == indexName);
         if (errorOnUndefined && index === undefined) {
-            throw new Error(`${indexName} needs to be present in file!`);
+            throw new Error(`${indexName} needs to be present in file.`);
         }
         return index;
     }

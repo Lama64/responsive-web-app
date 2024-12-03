@@ -1,19 +1,27 @@
 $(document).ready(() => {
 
-    // overlay should be open on load
+    /**
+     * Open the help overlay when the page loads.
+     */
     $("#help-overlay").fadeIn();
 
-    // open overlay
+    /**
+     * Open the help overlay when the ? button is pressed.
+     */
     $("#open-help").on("click", () => {
         $("#help-overlay").fadeIn();
     });
 
-    // close overlay
+    /**
+     * Close the help overlay if the X button in the overlay is pressed.
+     */
     $("#close-help").on("click", () => {
         $("#help-overlay").fadeOut();
     });
 
-    // close overlay on outside click
+    /**
+     * Close the help overlay on a click outside of the help overlay content.
+     */
     $("#help-overlay").on("click", (event) => {
         if ($(event.target).is("#help-overlay")) {
             $("#help-overlay").fadeOut();
