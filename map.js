@@ -36,7 +36,7 @@ $(document).ready(() => {
     }).addTo(map);
 
     // track player location
-    map.locate({watch: true});
+    map.locate({ watch: true });
 
     /**
      * Called each time the location of the player has been found.
@@ -48,16 +48,18 @@ $(document).ready(() => {
         let radius = e.accuracy;
         if (playerLocation) { // location marker already exists
             playerLocation.setLatLng(e.latlng);
-            playerLocation.setPopupContent(`You are within ${radius} meters from this point`);
+            playerLocation.setPopupContent(`You are within ${radius} meters from this point.`);
             playerAccuracyRadius.setLatLng(e.latlng);
             playerAccuracyRadius.setRadius(radius);
         }
         else { // location marker needs to be created
-            playerLocation = L.marker(e.latlng, {icon: playerLocationIcon}).bindPopup(`You are within ${radius} meters from this point`).addTo(map);
+            playerLocation = L.marker(e.latlng, { icon: playerLocationIcon }).bindPopup(`You are within ${radius} meters from this point.`).addTo(map);
             playerAccuracyRadius = L.circle(e.latlng, radius).addTo(map);
             map.setView(e.latlng);
         }
-        checkForStations(e.latlng, radius);
+        if (stationMarkers.length > 0) {
+            checkForStations(e.latlng, radius);
+        }
     }
     map.on('locationfound', onLocationFound);
 
@@ -67,14 +69,14 @@ $(document).ready(() => {
      * @param {Event} e Event containing information about the error.
      */
     function onLocationError(e) {
-        alert(e.message); // TODO: change to toast
+        toast(false, e.message);
     }
     map.on('locationerror', onLocationError);
 
     /**
      * Set all stations inside the radius around the players location to be visited.
      * 
-     * @param {L.LatLng} latlng A latitude, longitude object of Leaflet.
+     * @param {L.LatLng} latlng A latitude, longitude object of Leaflet containing position to search around.
      * @param {Number} radius The radius to check for stations in.
      */
     function checkForStations(latlng, radius) {
@@ -93,13 +95,13 @@ $(document).ready(() => {
     function displayStations(stations) {
         let layerGroups = {};
         stations.forEach((values) => {
-            let marker = L.marker([values['lat'], values['lon']], {icon: redPin}).bindPopup(values['name']);
+            let marker = L.marker([values['lat'], values['lon']], { icon: redPin }).bindPopup(values['name']);
             stationMarkers.push(marker);
             if (`${values['zone']}` in layerGroups) { // layer group exists with zone name
                 layerGroups[`${values['zone']}`]
                     .addLayer(marker).addTo(map);
             } else { // layer group needs to be created
-                layerGroups[`${values['zone']}`] 
+                layerGroups[`${values['zone']}`]
                     = L.layerGroup([marker]).addTo(map);
             }
         });

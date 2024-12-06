@@ -6,13 +6,13 @@ $(document).ready(() => {
      */
     $('.city-search-form').on("submit", async function (event) {
         event.preventDefault();
-        let inputField =  $(this).find('input');
+        let inputField = $(this).find('input');
         try {
-            displayStations(await stationsAPICall(inputField.val())); // add try catch
+            displayStations(await stationsAPICall(inputField.val()));
             inputField.blur();
             inputField.val('');
         } catch (error) {
-            // failure toast
+            toast(false, error.message);
         }
     })
 
@@ -30,7 +30,7 @@ $(document).ready(() => {
             "https://overpass-api.de/api/interpreter",
             {
                 method: "POST",
-                body: "data="+ encodeURIComponent(`
+                body: "data=" + encodeURIComponent(`
                         [out:json][timeout:100];
                         // Define the area by the city name
                         area[name="${geocodeArea}"]->.searchArea;
@@ -53,14 +53,14 @@ $(document).ready(() => {
         let count = 0;
         for (let station of result.elements) {
             if (station.tags && station.lat && station.lon) { // only add nodes which contain the required information
-                stations.set(station.id, {name: station.tags.name, lat: station.lat, lon: station.lon, zone: geocodeArea});
+                stations.set(station.id, { name: station.tags.name, lat: station.lat, lon: station.lon, zone: geocodeArea });
                 count++;
             }
         }
         if (count === 0) {
-            throw new Error("No stations found.")
+            throw new Error("No stations found.");
         } else {
-            // TODO: success toast
+            toast(true, `${count} stations added.`);
         }
         return stations;
     }
@@ -80,10 +80,10 @@ $(document).ready(() => {
             try {
                 displayStations(parseStopsFile(text));
             } catch (error) {
-                alert(error); // TODO: replace with toast
+                toast(false, error.message);
             }
         }
-        reader.onerror = () => alert('Error loading file'); // TODO: change to toast
+        reader.onerror = () => toast(false, 'Error loading file.');
     })
 
     /**
@@ -116,19 +116,19 @@ $(document).ready(() => {
                 continue; // station only needed once (each track listed seperately)
             }
 
-            if (values[typeIndex] == 1) { 
+            if (values[typeIndex] == 1) {
                 break; // parent stations listed seperately at end of file with location_type 1, not needed again
             }
 
             stations.set(values[idIndex],
-                {name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + values[zoneIndex]});
+                { name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + values[zoneIndex] });
             previousParentStation = values[parentIndex];
             count++;
         }
         if (count === 0) {
-            throw new Error("No stations found in file.")
+            throw new Error("No stations found in file.");
         } else {
-            // TODO: success toast
+            toast(true, `${count} stations added.`);
         }
         return stations;
     }

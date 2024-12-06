@@ -3,7 +3,7 @@
     font-size: 1rem;
     padding: 0;
     margin: 0;
-    border-radius: 0.5rem;
+    
 }
 
 :root {
@@ -11,6 +11,8 @@
     --palette-grey: rgb(49, 54, 63);
     --palette-teal: rgb(118, 171, 174);
     --palette-white: rgb(238, 238, 238);
+    --error-red: rgb(234, 51, 35);
+    --success-green: rgb(33, 173, 5);
 }
 
 html {
@@ -37,12 +39,14 @@ header {
     color: var(--palette-white);
     padding-top: 1rem;
     padding-bottom: 1rem;
+    border-radius: 0;
 }
 
 input {
     background-color: var(--palette-grey);
     color: var(--palette-white);
-    padding: 10px;
+    padding: 0.4rem;
+    border-radius: 0.5rem;
 }
 
 input[type = "file"] {
@@ -55,18 +59,18 @@ h2 {
 }
 
 p {
-    padding: 10px
+    padding: 0.5rem
 }
 
 .file-upload {
     display: flex;
     align-items: center;
     cursor: pointer;
-    border: 1px solid #ccc;
     padding: 0.25rem 0.75rem;
     background-color: var(--palette-teal);
     border-width: 0;
-    color: var(--palette-grey)
+    color: var(--palette-grey);
+    border-radius: 0.5rem;
 }
 
 .file-upload:hover {
@@ -81,18 +85,47 @@ p {
   'opsz' 24
 }
 
+.toast-header {
+    align-items: center;
+    background-color: var(--palette-black);
+    color: var(--palette-white);
+}
+
+.toast {
+    border-radius: 0.5rem;
+}
+
+.toast-body {
+    background-color: var(--palette-grey);
+    color: var(--palette-white);
+}
+
+#toast-icon {
+    padding-right: 0.5rem;
+}
+
+#close-toast {
+    cursor: pointer;
+}
+
+#close-toast:hover {
+    color: var(--palette-teal);
+}
+
 #map {
     display: flex;
     flex-direction: column;
     flex: 1;
+    border-radius: 0;
 }
 
 #header-buttons {
     display: flex;
-    gap: 10px;
+    gap: 1rem;
     align-items: center;
     position: absolute;
-    right: 3rem;
+    right: 2rem;
+    border-radius: 0.5rem;
 }
 
 #open-help {
@@ -136,6 +169,12 @@ p {
     -ms-transform: translate(-50%,-50%);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     color: var(--palette-white);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    border-radius: 8px;
+    box-sizing: border-box;
+    padding: 1rem;
 }
 
 #help-header {
@@ -144,4 +183,16 @@ p {
     align-items: center;
     justify-content: space-between;
     padding: 10px;
+}
+
+@media (max-width: 600px) { /* vertical phone */
+    #help-content {
+        max-width: 100vw;
+        max-height: 100vh;
+        top: 0;
+        left: 0;
+        transform: none;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
 }

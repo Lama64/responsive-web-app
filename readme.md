@@ -5,7 +5,6 @@ TODO:
 - better layer selection
 - different menu to add stations
 - help menu text
-- add toast instead of alert
 - button to open add stations from help menu
 - save progress (cookies?, file?)
 - city presets?
