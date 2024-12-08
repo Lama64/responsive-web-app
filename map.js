@@ -4,6 +4,11 @@ $(document).ready(() => {
     let playerLocation = undefined;
     let playerAccuracyRadius = undefined;
     let stationMarkers = [];
+    let overlaysTree = {
+        label: ' Stations',
+        selectAllCheckbox: 'un/select all',
+        children: [],
+    };
 
     // A green pin used to indicate a station that has been visited.
     let greenPin = L.icon({
@@ -88,30 +93,59 @@ $(document).ready(() => {
     }
 
     /**
-     * Displays the stations given as a parameter on the map as red markers.
+     * Displays the stations given as a parameter on the map as red markers
+     * and creates a tree structure in the layer control.
+     * See Usage on https://github.com/jjimenezshaw/Leaflet.Control.Layers.Tree for examples of tree structures.
      * 
      * @param {Map<string, {name: string, lat: Number, lon: Number, zone: string}>} stations A map containing the stations.
      */
     function displayStations(stations) {
-        let layerGroups = {};
+        let zones = new Set();
         stations.forEach((values) => {
-            let marker = L.marker([values['lat'], values['lon']], { icon: redPin }).bindPopup(values['name']);
+            let currentZone = values['zone'];
+            let currentName = values['name'];
+            let marker = L.marker([values['lat'], values['lon']], { icon: redPin }).bindPopup(currentName).addTo(map);
             stationMarkers.push(marker);
-            if (`${values['zone']}` in layerGroups) { // layer group exists with zone name
-                layerGroups[`${values['zone']}`]
-                    .addLayer(marker).addTo(map);
-            } else { // layer group needs to be created
-                layerGroups[`${values['zone']}`]
-                    = L.layerGroup([marker]).addTo(map);
+            if (zones.has(currentZone)) { // zone already has a node in tree
+                // Traverse tree structure:
+                // access children -> find child with zone as label -> access children of zone -> first child is unvisited stations
+                // -> access children of unvisited stations -> add new station
+                overlaysTree['children'].find((child) => child.label === ` ${currentZone}`)['children'][0]['children']
+                    .push({ label: ` ${currentName}`, layer: marker });
+            } else { // zone doesn't have node in tree
+                overlaysTree['children'].push({ // set up the required nodes
+                    label: ` ${currentZone}`,
+                    selectAllCheckbox: 'un/select all',
+                    children: [{
+                        label: ' Unvisited Stations',
+                        selectAllCheckbox: 'un/select all',
+                        collapsed: true,
+                        children: [{ label: ` ${currentName}`, layer: marker }],
+                    }, {
+                        label: ' Visited Stations',
+                        selectAllCheckbox: 'un/select all',
+                        children: [],
+                    }],
+                })
             }
+            zones.add(currentZone);
         });
         if (layerControl) { // layer control exists
-            for (let group in layerGroups) {
-                layerControl.addOverlay(layerGroups[group], group).addTo(map);
-            };
+            layerControl.setOverlayTree(overlaysTree);
         } else { // layer control needs to be created
-            layerControl = L.control.layers(null, layerGroups).addTo(map);
+            layerControl = L.control.layers.tree(undefined, overlaysTree).addTo(map);
         }
     }
     window.displayStations = displayStations;
 });
+
+
+/*
+        if (`${values['zone']}` in layerGroups) { // layer group exists with zone name
+            layerGroups[`${values['zone']}`]
+                .addLayer(marker).addTo(map);
+        } else { // layer group needs to be created
+            layerGroups[`${values['zone']}`]
+                = L.layerGroup([marker]).addTo(map);
+        }
+        */

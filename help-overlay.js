@@ -8,7 +8,7 @@ $(document).ready(() => {
     /**
      * Open the help overlay when the ? button is pressed.
      */
-    $("#open-help").on("click", () => {
+    $(".open-help").on("click", () => {
         $("#help-overlay").fadeIn();
     });
 

@@ -1,14 +1,16 @@
 $(document).ready(() => {
 
     /**
-     * Opens the Hamburger menu
+     * Opens the slideover menu
      */
-    $('#open-menu').on('click', () => {
-        $('#menu').css('width', '400px');
+    $('.open-menu').on('click', () => {
+        let screenWidth = window.innerWidth;
+        let menuWidth = screenWidth < 400 ? screenWidth : 400;
+        $('#menu').css('width', menuWidth);
     })
 
     /**
-     * Closes the Hamburger menu
+     * Closes the slideover menu
      */
     $('#close-menu').on('click', () => {
         $('#menu').css('width', 0);
