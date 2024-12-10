@@ -3,12 +3,14 @@ $(document).ready(() => {
     let layerControl = undefined;
     let playerLocation = undefined;
     let playerAccuracyRadius = undefined;
-    let stationMarkers = [];
+    let unvisitedStationMarkers = [];
+    let visitedStationMarkers = [];
     let overlaysTree = {
         label: ' Stations',
         selectAllCheckbox: 'un/select all',
         children: [],
     };
+    let zones = new Set();
 
     // A green pin used to indicate a station that has been visited.
     let greenPin = L.icon({
@@ -58,11 +60,12 @@ $(document).ready(() => {
             playerAccuracyRadius.setRadius(radius);
         }
         else { // location marker needs to be created
-            playerLocation = L.marker(e.latlng, { icon: playerLocationIcon }).bindPopup(`You are within ${radius} meters from this point.`).addTo(map);
+            playerLocation = L.marker(e.latlng, { icon: playerLocationIcon })
+                .bindPopup(`You are within ${radius} meters from this point.`).addTo(map);
             playerAccuracyRadius = L.circle(e.latlng, radius).addTo(map);
             map.setView(e.latlng);
         }
-        if (stationMarkers.length > 0) {
+        if (unvisitedStationMarkers.length > 0) {
             checkForStations(e.latlng, radius);
         }
     }
@@ -85,11 +88,64 @@ $(document).ready(() => {
      * @param {Number} radius The radius to check for stations in.
      */
     function checkForStations(latlng, radius) {
-        let stationsInRange = L.GeometryUtils.layersWithin(map, stationMarkers, latlng, radius);
-        for (let station of stationsInRange) {
+        let stationsInRange = L.GeometryUtil.layersWithin(map, unvisitedStationMarkers.map((element) => element.marker),
+            latlng, radius);
+        moveToVisited(stationsInRange);
+    }
+
+    /**
+     * Moves a station from the unvisited to the visited category in the label control tree.
+     * Removes the marker from the collection of all unvisited markers.
+     * Turns the icon of the marker green.
+     * 
+     * @param {L.Marker[]} stations The visited stations.
+     */
+    function moveToVisited(stations) {
+        stations.forEach((station) => {
+            let unvisitedMarkerIndex = unvisitedStationMarkers.findIndex((element) => element.marker == station); // find index of station in collection of all unvisited stations
+            let zone = unvisitedStationMarkers[unvisitedMarkerIndex].zone; // get zone of station.
+            let unvistedStations = overlaysTree.children.find((child) => child.label === ` ${zone}`).children[0].children; // all unvisited stations in zone of station
+            let unvisitedIndex = unvistedStations.findIndex((element) => element.layer == station); // find index of station
+
+            let visitedStation = unvistedStations.splice(unvisitedIndex, 1)[0]; //remove from unvisited in tree
+            let name = visitedStation.label.slice(1); //remove whitespace added for formatting
+            visitedStation.layer.setPopupContent(`${name} <br>
+                <div class="form-check">
+                    <label class="form-check-label" for="marker-checkbox-${name} checked">
+                        Visited
+                    </label>
+                    <input class="form-check-input marker-checkbox" type="checkbox" id="marker-checkbox-${name}" checked>
+                </div>`);
+            overlaysTree.children.find((child) => child.label === ` ${zone}`).children[1].children.push(visitedStation); //add to visited in tree
+            let visitedStationMarker = unvisitedStationMarkers.splice(unvisitedMarkerIndex, 1)[0]; //remove from collection of all unvisited markers
+            visitedStationMarkers.push(visitedStationMarker); // add to collection of all visited markers
             station.setIcon(greenPin);
-            // TODO: move to visited group.
-        }
+        });
+        layerControl.setOverlayTree(overlaysTree);
+    }
+
+    function moveToUnvisited(stations) {
+        stations.forEach((station) => {
+            let visitedMarkerIndex = visitedStationMarkers.findIndex((element) => element.marker == station); //find index of station in collection of all visited stations
+            let zone = visitedStationMarkers[visitedMarkerIndex].zone; //get zone of station
+            let visitedStations = overlaysTree.children.find((child) => child.label === ` ${zone}`).children[1].children; //all visited stations in zone of station
+            let visitedIndex = visitedStations.findIndex((element) => element.layer == station);
+
+            let unvisitedStation = visitedStations.splice(visitedIndex, 1)[0]; // remove from visited in tree
+            let name = unvisitedStation.label.slice(1);
+            unvisitedStation.layer.setPopupContent(`${name} <br>
+                <div class="form-check">
+                    <label class="form-check-label" for="marker-checkbox-${name} checked">
+                        Visited
+                    </label>
+                    <input class="form-check-input marker-checkbox" type="checkbox" val="" id="marker-checkbox-${name}">
+                </div>`);
+            overlaysTree.children.find((child) => child.label === ` ${zone}`).children[0].children.push(unvisitedStation); //add to unvisited in tree
+            let unvisitedStationMarker = visitedStationMarkers.splice(visitedMarkerIndex, 1)[0]; //remove from collection of all visited markers
+            unvisitedStationMarkers.push(unvisitedStationMarker); //add to collection of all unvisited markers.
+            station.setIcon(redPin);
+        });
+        layerControl.setOverlayTree(overlaysTree);
     }
 
     /**
@@ -100,20 +156,38 @@ $(document).ready(() => {
      * @param {Map<string, {name: string, lat: Number, lon: Number, zone: string}>} stations A map containing the stations.
      */
     function displayStations(stations) {
-        let zones = new Set();
         stations.forEach((values) => {
-            let currentZone = values['zone'];
-            let currentName = values['name'];
-            let marker = L.marker([values['lat'], values['lon']], { icon: redPin }).bindPopup(currentName).addTo(map);
-            stationMarkers.push(marker);
+            let currentZone = values.zone;
+            let currentName = values.name;
+            let marker = L.marker([values.lat, values.lon], { icon: redPin }).bindPopup(`${currentName} <br>
+                <div class="form-check">
+                    <label class="form-check-label" for="marker-checkbox-${currentName}">
+                        Visited
+                    </label>
+                    <input class="form-check-input marker-checkbox" type="checkbox" value="" id="marker-checkbox-${currentName}">
+                </div>`
+            ).addTo(map);
+            // Add a change event handler for marker checkboxes, when a popup is opened.
+            marker.on('popupopen', () => {
+                $('.marker-checkbox').on('click', (clickEvent) => {
+                    if (clickEvent.target.checked) {
+                        moveToVisited([marker]);
+                    } else {
+                        moveToUnvisited([marker]);
+                    }
+                })
+            });
+            // Remove the event handler created above if the popup is closed.
+            marker.on('popupclose', () => $('.marker-checkbox').off('click'));
+            unvisitedStationMarkers.push({ zone: currentZone, marker });
             if (zones.has(currentZone)) { // zone already has a node in tree
                 // Traverse tree structure:
                 // access children -> find child with zone as label -> access children of zone -> first child is unvisited stations
                 // -> access children of unvisited stations -> add new station
-                overlaysTree['children'].find((child) => child.label === ` ${currentZone}`)['children'][0]['children']
+                overlaysTree.children.find((child) => child.label === ` ${currentZone}`).children[0].children
                     .push({ label: ` ${currentName}`, layer: marker });
             } else { // zone doesn't have node in tree
-                overlaysTree['children'].push({ // set up the required nodes
+                overlaysTree.children.push({ // set up the required nodes
                     label: ` ${currentZone}`,
                     selectAllCheckbox: 'un/select all',
                     children: [{
@@ -130,6 +204,9 @@ $(document).ready(() => {
             }
             zones.add(currentZone);
         });
+        overlaysTree.children.forEach((child) => {
+            child.children[0].children.sort((markerA, markerB) => markerA.label <= markerB.label ? -1 : 1);
+        })
         if (layerControl) { // layer control exists
             layerControl.setOverlayTree(overlaysTree);
         } else { // layer control needs to be created
@@ -138,14 +215,3 @@ $(document).ready(() => {
     }
     window.displayStations = displayStations;
 });
-
-
-/*
-        if (`${values['zone']}` in layerGroups) { // layer group exists with zone name
-            layerGroups[`${values['zone']}`]
-                .addLayer(marker).addTo(map);
-        } else { // layer group needs to be created
-            layerGroups[`${values['zone']}`]
-                = L.layerGroup([marker]).addTo(map);
-        }
-        */
