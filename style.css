@@ -37,6 +37,7 @@ p {
     padding: 0.5rem
 }
 
+
 input {
     background-color: var(--palette-grey);
     color: var(--palette-white);
@@ -73,6 +74,27 @@ input[type="checkbox"] {
     border-radius: 0;
 }
 
+.standard-button {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--palette-teal);
+    border-width: 0;
+    color: var(--palette-grey);
+    border-radius: 0.5rem;
+    max-width: fit-content;
+}
+
+.standard-button:hover {
+    background-color: var(--palette-white);
+}
+
+.button-red {
+    background-color: var(--error-red);
+    margin-top: 1rem;
+}
+
 /*Header*/
 
 header {
@@ -107,23 +129,7 @@ header {
 /*File upload*/
 
 .file-upload {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.25rem 0.75rem;
-    background-color: var(--palette-teal);
-    border-width: 0;
-    color: var(--palette-grey);
-    border-radius: 0.5rem;
-}
-
-.file-upload:hover {
-    background-color: var(--palette-white);
-}
-
-.file-upload-help {
     padding: 0.75rem 1rem;
-    max-width: fit-content;
     margin-top: 1rem;
 }
 
@@ -145,6 +151,13 @@ header {
 .toast-body {
     background-color: var(--palette-grey);
     color: var(--palette-white);
+}
+
+.toast-bottom-right {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    padding: 1rem;
 }
 
 #toast-icon {
@@ -251,6 +264,7 @@ header {
 
 /******************/
 
+
 /*Help Overlay*/
 
 #help-overlay {
@@ -300,6 +314,33 @@ header {
 
 #close-help:hover {
     color: var(--palette-teal)
+}
+
+/******************/
+
+
+/*Stopwatch*/
+
+.stopwatch-button {
+    font-size: 40px;
+    cursor: pointer;
+}
+
+#stopwatch {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    color: var(--palette-white);
+    padding: 1rem, 0.75rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--palette-grey);
+    z-index: 800;
+}
+
+#time {
+    font-size: 40px;
 }
 
 /******************/

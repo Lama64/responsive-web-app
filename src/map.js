@@ -95,16 +95,16 @@ $(document).ready(() => {
 
     /**
      * Moves a station from the unvisited to the visited category in the label control tree.
-     * Removes the marker from the collection of all unvisited markers.
+     * Moves the marker from the collection of all unvisited makers to the collection of all visited markers.
      * Turns the icon of the marker green.
      * 
-     * @param {L.Marker[]} stations The visited stations.
+     * @param {L.Marker[]} stations The stations to move.
      */
     function moveToVisited(stations) {
         stations.forEach((station) => {
-            let unvisitedMarkerIndex = unvisitedStationMarkers.findIndex((element) => element.marker == station); // find index of station in collection of all unvisited stations
-            let zone = unvisitedStationMarkers[unvisitedMarkerIndex].zone; // get zone of station.
-            let unvistedStations = overlaysTree.children.find((child) => child.label === ` ${zone}`).children[0].children; // all unvisited stations in zone of station
+            let unvisitedMarkerIndex = unvisitedStationMarkers.findIndex((element) => element.marker == station); //find index of station in collection of all unvisited stations
+            let zone = unvisitedStationMarkers[unvisitedMarkerIndex].zone; //get zone of station.
+            let unvistedStations = overlaysTree.children.find((child) => child.label === ` ${zone}`).children[0].children; //all unvisited stations in zone of station
             let unvisitedIndex = unvistedStations.findIndex((element) => element.layer == station); // find index of station
 
             let visitedStation = unvistedStations.splice(unvisitedIndex, 1)[0]; //remove from unvisited in tree
@@ -120,10 +120,25 @@ $(document).ready(() => {
             let visitedStationMarker = unvisitedStationMarkers.splice(unvisitedMarkerIndex, 1)[0]; //remove from collection of all unvisited markers
             visitedStationMarkers.push(visitedStationMarker); // add to collection of all visited markers
             station.setIcon(greenPin);
+            visitedStationMarker.marker.closePopup();
         });
+        if (!stopwatchStarted) {
+            toggleStopwatch();
+        }
+        if (unvisitedStationMarkers.length === 0 && stopwatchStarted) {
+            toggleStopwatch();
+        }
         layerControl.setOverlayTree(overlaysTree);
     }
 
+
+    /**
+     * Moves a station from the visited to the unvisited category in the label control tree.
+     * Moves the marker from the collection of all visited makers to the collection of all unvisited markers.
+     * Turns the icon of the marker red.
+     * 
+     * @param {L.Marker[]} stations The stations to move.
+     */
     function moveToUnvisited(stations) {
         stations.forEach((station) => {
             let visitedMarkerIndex = visitedStationMarkers.findIndex((element) => element.marker == station); //find index of station in collection of all visited stations
@@ -138,13 +153,17 @@ $(document).ready(() => {
                     <label class="form-check-label" for="marker-checkbox-${name} checked">
                         Visited
                     </label>
-                    <input class="form-check-input marker-checkbox" type="checkbox" val="" id="marker-checkbox-${name}">
+                    <input class="form-check-input marker-checkbox" type="checkbox" id="marker-checkbox-${name}">
                 </div>`);
             overlaysTree.children.find((child) => child.label === ` ${zone}`).children[0].children.push(unvisitedStation); //add to unvisited in tree
             let unvisitedStationMarker = visitedStationMarkers.splice(visitedMarkerIndex, 1)[0]; //remove from collection of all visited markers
             unvisitedStationMarkers.push(unvisitedStationMarker); //add to collection of all unvisited markers.
             station.setIcon(redPin);
+            unvisitedStationMarker.marker.closePopup();
         });
+        overlaysTree.children.forEach((child) => {
+            child.children[0].children.sort((markerA, markerB) => markerA.label <= markerB.label ? -1 : 1);
+        })
         layerControl.setOverlayTree(overlaysTree);
     }
 
@@ -169,7 +188,7 @@ $(document).ready(() => {
             ).addTo(map);
             // Add a change event handler for marker checkboxes, when a popup is opened.
             marker.on('popupopen', () => {
-                $('.marker-checkbox').on('click', (clickEvent) => {
+                $('.marker-checkbox').on('change', (clickEvent) => {
                     if (clickEvent.target.checked) {
                         moveToVisited([marker]);
                     } else {
@@ -178,7 +197,7 @@ $(document).ready(() => {
                 })
             });
             // Remove the event handler created above if the popup is closed.
-            marker.on('popupclose', () => $('.marker-checkbox').off('click'));
+            marker.on('popupclose', () => $('.marker-checkbox').off('change'));
             unvisitedStationMarkers.push({ zone: currentZone, marker });
             if (zones.has(currentZone)) { // zone already has a node in tree
                 // Traverse tree structure:

@@ -5,7 +5,12 @@ $(document).ready(() => {
      */
     $('.open-menu').on('click', () => {
         let screenWidth = window.innerWidth;
-        let menuWidth = screenWidth < 400 ? screenWidth : 400;
+        let screenHeight = window.innerHeight;
+        if (screenWidth < 400) {
+            menuWidth = screenWidth;
+        } else if (screenHeight < 400) {
+            menuWidth = screenHeight;
+        } else menuWidth = 400;
         $('#menu').css('width', menuWidth);
     })
 
