@@ -1,17 +1,19 @@
 $(document).ready(() => {
-    let elapsedTime = 0;
+    window.elapsedTime = 0;
     window.stopwatchStarted = false;
     let timerInterval;
 
     /**
      * Updates the stopwatch display with the current elapsed time.
      */
-    function updateDisplay() {
+    function updateStopwatchDisplay() {
         let hours = String(Math.floor(elapsedTime / 3600)).padStart(2, '0');
         let minutes = String(Math.floor((elapsedTime % 3600) / 60)).padStart(2, '0');
         let seconds = String(elapsedTime % 60).padStart(2, '0');
         $('#time').text(`${hours}:${minutes}:${seconds}`);
     }
+    window.updateStopwatchDisplay = updateStopwatchDisplay;
+
 
     /**
      * Toggles the stopwatch when the play / pause button is pressed.
@@ -32,7 +34,7 @@ $(document).ready(() => {
         } else if (!timerInterval) {
             timerInterval = setInterval(() => {
                 elapsedTime++;
-                updateDisplay();
+                updateStopwatchDisplay();
             }, 1000);
             stopwatchStarted = true;
             $('#stopwatch-start').text('pause');
@@ -49,7 +51,7 @@ $(document).ready(() => {
         elapsedTime = 0;
         stopwatchStarted = false;
         $('#stopwatch-start').text('play_arrow');
-        updateDisplay();
+        updateStopwatchDisplay();
     })
 
     /**
