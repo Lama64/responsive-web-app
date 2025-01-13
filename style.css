@@ -262,6 +262,20 @@ header {
     color: var(--palette-teal);
 }
 
+
+#zones-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: large;
+    padding-right: 30px;
+}
+
+#zones-list li span {
+    cursor: pointer;
+    color: var(--error-red);
+}
+
 /******************/
 
 

@@ -3,8 +3,8 @@ $(document).ready(() => {
     /**
      * Creates a toast with the given message and is positive or negative depending on the success parameter.
      * 
-     * @param {boolean} success Controls whether the toast is positive or negative.
-     * @param {string} message The message of the toast.
+     * @param {Boolean} success Controls whether the toast is positive or negative.
+     * @param {String} message The message of the toast.
      */
     function toast(success, message) {
         // jquery makes it harder

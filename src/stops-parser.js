@@ -20,8 +20,8 @@ $(document).ready(() => {
      * Calls the Overpass API to get all tram stations inside the given area.
      * See https://wiki.openstreetmap.org/wiki/Overpass_API for API information.
      * 
-     * @param {string} geocodeArea The area to search.
-     * @returns {Promise<Map<string, {name: string, lat: Number, lon: Number, zone: string}>>}
+     * @param {String} geocodeArea The area to search.
+     * @returns {Promise<Map<String, {name: String, lat: Number, lon: Number, zone: String}>>}
      *          A promise of a map containing the relavant information about the stations needed for the markers.
      * @throws Will throw an error if no suitable stations could be found.
      */
@@ -88,8 +88,8 @@ $(document).ready(() => {
 
     /**
      * Parses the input text to a map.
-     * @param {string} text the text of the input file.
-     * @returns {Map<string, {name: string, lat: Number, lon: Number, zone: string}>}
+     * @param {String} text the text of the input file.
+     * @returns {Map<String, {name: String, lat: Number, lon: Number, zone: String}>}
      *          A map containing the relavant information about the stations needed for the markers.
      * @throws Will throw an error if no suitable stations where found in the file.
      */
@@ -136,9 +136,9 @@ $(document).ready(() => {
     /**
      * Finds the array index of the given index name.
      * 
-     * @param {string} indexName The index name to find e.g. stop_name.
-     * @param {string[]} array The array to search.
-     * @param {boolean} errorOnUndefined If true an error will be thrown if the array doesn't contain the index name.
+     * @param {String} indexName The index name to find e.g. stop_name.
+     * @param {String[]} array The array to search.
+     * @param {Boolean} errorOnUndefined If true an error will be thrown if the array doesn't contain the index name.
      * @returns {Number | undefined} The array index of the index name or undefined if errorOnUndefined is false and the index name was not found.
      * @throws Will throw an error if errorOnUndefined is true and the index name was not found.
      */

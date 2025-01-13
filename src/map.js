@@ -1,18 +1,31 @@
 $(document).ready(() => {
+    /**@type {L.Map} Map as main part of page.*/
     let map = L.map('map').setView([49.007, 8.404], 14);
+    /**@type {L.Control} Layer control to enable and disable markers on map.*/
     let layerControl = undefined;
+    /**@type {L.Marker} Marker of the players current position.*/
     let playerLocation = undefined;
+    /**@type {L.Circle} Circle on the map indicating the accuracy radius of the players position.*/
     let playerAccuracyRadius = undefined;
+
+    /**@type {{zone: String, marker: L.Marker}[]} All unvisited station markers.*/
     let unvisitedStationMarkers = [];
+    /**@type {{zone: String, marker: L.Marker}[]} All visited station markers.*/
     let visitedStationMarkers = [];
+
+    /**@typedef {{label: String, selectAllCheckbox?: String, children?: TreeObject[], collapsed?: Boolean, layer?: L.Layer, stationName?: String, visited?: Boolean}} TreeObject*/
+    /**@type {TreeObject} Tree structure for the layer control.*/
     let overlaysTree = {
         label: ' Stations',
         selectAllCheckbox: 'un/select all',
         children: [],
     };
-    let zones = new Set();
 
-    // A green pin used to indicate a station that has been visited.
+    /**@type {Set<String>} All zones added.*/
+    let zones = new Set();
+    window.zones = zones;
+
+    /**@type {L.Icon} A green pin used to indicate a station that has been visited.*/
     let greenPin = L.icon({
         iconUrl: 'location-pin-icon-green.png',
         iconSize: [45, 45],
@@ -20,7 +33,7 @@ $(document).ready(() => {
         popupAnchor: [0, -34],
     });
 
-    // A red pin used to indicate a station that has not been visited.
+    /**@type {L.Icon} A red pin used to indicate a station that has not been visited.*/
     let redPin = L.icon({
         iconUrl: 'location-pin-icon-red.png',
         iconSize: [45, 45],
@@ -28,7 +41,7 @@ $(document).ready(() => {
         popupAnchor: [0, -34],
     });
 
-    // The icon used for the players location.
+    /**@type {L.Icon} The icon used for the players location.*/
     let playerLocationIcon = L.icon({
         iconUrl: 'player-location-icon.png',
         iconSize: [45, 45],
@@ -92,7 +105,7 @@ $(document).ready(() => {
      */
     function checkForStations(latlng, radius) {
         let stationsInRange = L.GeometryUtil.layersWithin(map, unvisitedStationMarkers.map((element) => element.marker),
-            latlng, radius);
+            latlng, Math.max(radius, 30));
         if (stationsInRange.length > 0) {
             moveToVisited(stationsInRange);
         }
@@ -178,11 +191,27 @@ $(document).ready(() => {
     }
 
     /**
+     * Deletes all stations in the given zone from the map and the layer control.
+     * @param {String} zone The zone to delete.
+     */
+    function deleteZone(zone) {
+        overlaysTree.children.splice(overlaysTree.children.findIndex((child) => child.label === ` ${zone}`), 1); // remove from overlays tree
+        unvisitedStationMarkers.filter((element) => element.zone === zone).forEach((element) => map.removeLayer(element.marker)); // remove from map
+        visitedStationMarkers.filter((element) => element.zone === zone).forEach((element) => map.removeLayer(element.marker)); // remove from map
+        unvisitedStationMarkers = unvisitedStationMarkers.filter((element) => element.zone !== zone); // remove from collection of all unvisited stations
+        visitedStationMarkers = visitedStationMarkers.filter((element) => element.zone !== zone); // remove from collection of all visited stations
+        zones.delete(zone);
+        layerControl.setOverlayTree(overlaysTree);
+        saveData();
+    }
+    window.deleteZone = deleteZone;
+
+    /**
      * Displays the stations given as a parameter on the map as red markers
      * and creates a tree structure in the layer control.
      * See Usage on https://github.com/jjimenezshaw/Leaflet.Control.Layers.Tree for examples of tree structures.
      * 
-     * @param {Map<string, {name: string, lat: Number, lon: Number, zone: string}>} stations A map containing the stations.
+     * @param {Map<String, {name: String, lat: Number, lon: Number, zone: String}>} stations A map containing the stations.
      */
     function displayStations(stations) {
         stations.forEach((values) => {
@@ -231,6 +260,7 @@ $(document).ready(() => {
                         children: [],
                     }],
                 })
+                addToMenuZonesList(currentZone);
             }
             zones.add(currentZone);
         });
@@ -246,6 +276,11 @@ $(document).ready(() => {
     }
     window.displayStations = displayStations;
 
+    /**
+     * Attaches event handlers to the marker to handle the checkbox in the popup.
+     * 
+     * @param {L.Marker} marker The marker to attach the event handlers to.
+     */
     function attachEventHandlers(marker) {
         marker.on('popupopen', () => {
             $('.marker-checkbox').on('change', (clickEvent) => {
@@ -259,6 +294,9 @@ $(document).ready(() => {
         marker.on('popupclose', () => $('.marker-checkbox').off('change'));
     }
 
+    /**
+     * Saves the current state of the stations and the elapsed time to the local storage.
+     */
     function saveData() {
         let stringTree = JSON.stringify(overlaysTree, function (key, value) {
             if (key === 'layer') {
@@ -270,6 +308,9 @@ $(document).ready(() => {
         localStorage.setItem('elapsedTime', elapsedTime);
     }
 
+    /**
+     * Loads the data from the local storage and recreates the stations and the elapsed time.
+     */
     function loadData() {
         let storedTree = localStorage.getItem('overlaysTree');
         if (!storedTree) {
@@ -285,6 +326,9 @@ $(document).ready(() => {
                 } else {
                     marker = L.marker(value.latlng, { icon: redPin }).bindPopup(value.content).addTo(map);
                     unvisitedStationMarkers.push({ zone: this.zone, marker });
+                }
+                if (!(zones.has(this.zone))) {
+                    addToMenuZonesList(this.zone);
                 }
                 zones.add(this.zone);
                 attachEventHandlers(marker);
