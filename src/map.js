@@ -56,7 +56,7 @@ $(document).ready(() => {
     }).addTo(map);
 
     // track player location
-    map.locate({ watch: true });
+    map.locate({ watch: true, enableHighAccuracy: true });
 
     // load existing data
     loadData();
@@ -71,13 +71,13 @@ $(document).ready(() => {
         let radius = e.accuracy;
         if (playerLocation) { // location marker already exists
             playerLocation.setLatLng(e.latlng);
-            playerLocation.setPopupContent(`You are within ${radius} meters from this point.`);
+            playerLocation.setPopupContent(`You are within ${radius.toFixed(2)} meters from this point.`);
             playerAccuracyRadius.setLatLng(e.latlng);
             playerAccuracyRadius.setRadius(radius);
         }
         else { // location marker needs to be created
             playerLocation = L.marker(e.latlng, { icon: playerLocationIcon })
-                .bindPopup(`You are within ${radius} meters from this point.`).addTo(map);
+                .bindPopup(`You are within ${radius.toFixed(2)} meters from this point.`).addTo(map);
             playerAccuracyRadius = L.circle(e.latlng, radius).addTo(map);
             map.setView(e.latlng);
         }
@@ -104,10 +104,13 @@ $(document).ready(() => {
      * @param {Number} radius The radius to check for stations in.
      */
     function checkForStations(latlng, radius) {
+        if (radius > 100) {
+            radius = 100; // limit radius to 100 meters
+        }
         let stationsInRange = L.GeometryUtil.layersWithin(map, unvisitedStationMarkers.map((element) => element.marker),
             latlng, Math.max(radius, 30));
         if (stationsInRange.length > 0) {
-            moveToVisited(stationsInRange);
+            moveToVisited(stationsInRange.map((element) => element.layer));
         }
     }
 
@@ -194,10 +197,21 @@ $(document).ready(() => {
      * Deletes all stations in the given zone from the map and the layer control.
      * @param {String} zone The zone to delete.
      */
-    function deleteZone(zone) {
+    async function deleteZone(zone) {
         overlaysTree.children.splice(overlaysTree.children.findIndex((child) => child.label === ` ${zone}`), 1); // remove from overlays tree
-        unvisitedStationMarkers.filter((element) => element.zone === zone).forEach((element) => map.removeLayer(element.marker)); // remove from map
-        visitedStationMarkers.filter((element) => element.zone === zone).forEach((element) => map.removeLayer(element.marker)); // remove from map
+        for (let i = 0; i < unvisitedStationMarkers.length; i++) { // remove from map
+            if (unvisitedStationMarkers[i].zone === zone) {
+                // slow, function of library, can't easily be improved
+                // slow if deleting a part of the markers, a lot faster if deleting most of the markers.
+                map.removeLayer(unvisitedStationMarkers[i].marker);
+            }
+        }
+
+        for (let i = 0; i < visitedStationMarkers.length; i++) {// remove from map
+            if (visitedStationMarkers[i].zone === zone) {
+                map.removeLayer(visitedStationMarkers[i].marker);
+            }
+        }
         unvisitedStationMarkers = unvisitedStationMarkers.filter((element) => element.zone !== zone); // remove from collection of all unvisited stations
         visitedStationMarkers = visitedStationMarkers.filter((element) => element.zone !== zone); // remove from collection of all visited stations
         zones.delete(zone);
@@ -270,7 +284,7 @@ $(document).ready(() => {
         if (layerControl) { // layer control exists
             layerControl.setOverlayTree(overlaysTree);
         } else { // layer control needs to be created
-            layerControl = L.control.layers.tree(undefined, overlaysTree).addTo(map);
+            layerControl = L.control.layers.tree(undefined, overlaysTree, { position: 'topleft' }).addTo(map);
         }
         saveData();
     }
@@ -336,7 +350,7 @@ $(document).ready(() => {
             }
             return value;
         });
-        layerControl = L.control.layers.tree(undefined, overlaysTree).addTo(map);
+        layerControl = L.control.layers.tree(undefined, overlaysTree, { position: 'topleft' }).addTo(map);
         elapsedTime = localStorage.getItem('elapsedTime');
         updateStopwatchDisplay();
     }

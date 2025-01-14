@@ -77,13 +77,14 @@ $(document).ready(() => {
 
         reader.onload = (e) => {
             text = e.target.result;
-            try {
-                displayStations(parseStopsFile(text));
-            } catch (error) {
-                toast(false, error.message);
-            }
+            //try {
+            displayStations(parseStopsFile(text));
+            //} catch (error) {
+            //toast(false, error.message);
+            // }
         }
         reader.onerror = () => toast(false, 'Error loading file.');
+        $('#stop-upload').val('');
     })
 
     /**
@@ -110,18 +111,22 @@ $(document).ready(() => {
         let count = 0;
         for (let line of lines) {
             // " removed after split
-            const values = line.split(',').map(value => value.replace(/^"|"$/g, ''));
+            let matched = line.match(/(".*?")/g);
+            if (!matched) { // skip lines with no matches
+                continue;
+            }
+            const values = matched.map(value => value.replace(/^"|"$/g, ''));
 
             if (previousParentStation === values[parentIndex] && previousParentStation !== '') {
                 continue; // station only needed once (each track listed seperately)
             }
 
             if (values[typeIndex] == 1) {
-                break; // parent stations listed seperately at end of file with location_type 1, not needed again
+                continue; // parent stations have location_type 1, skip over them as they are not needed 
             }
-
+            let zone = values[zoneIndex] ?? '';
             stations.set(values[idIndex],
-                { name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + values[zoneIndex] });
+                { name: values[nameIndex], lat: values[latIndex], lon: values[lonIndex], zone: 'Zone ' + zone });
             previousParentStation = values[parentIndex];
             count++;
         }

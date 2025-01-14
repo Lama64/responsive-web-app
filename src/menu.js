@@ -29,7 +29,7 @@ $(document).ready(() => {
     function addToMenuZonesList(zone) {
         let listItem = $('<li></li>').text(zone);
         let deleteButton = $('<span class="material-symbols-outlined"></span>')
-            .text('delete').on('click', function () {
+            .text('delete').on('click', async function () {
                 $(this).parent().remove();
                 deleteZone(zone);
             });
