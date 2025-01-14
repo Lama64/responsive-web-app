@@ -77,11 +77,11 @@ $(document).ready(() => {
 
         reader.onload = (e) => {
             text = e.target.result;
-            //try {
-            displayStations(parseStopsFile(text));
-            //} catch (error) {
-            //toast(false, error.message);
-            // }
+            try {
+                displayStations(parseStopsFile(text));
+            } catch (error) {
+                toast(false, error.message);
+            }
         }
         reader.onerror = () => toast(false, 'Error loading file.');
         $('#stop-upload').val('');
